@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{AF966123-87A2-46B1-9F5F-7D062359E1A8}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Mechanism.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="C:\Users\Home\Documents\RAD Studio\Projects\ACAD.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Mechanism">
+        <MSBuild Projects="Mechanism.dproj"/>
+    </Target>
+    <Target Name="Mechanism:Clean">
+        <MSBuild Projects="Mechanism.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Mechanism:Make">
+        <MSBuild Projects="Mechanism.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ACAD">
+        <MSBuild Projects="C:\Users\Home\Documents\RAD Studio\Projects\ACAD.dproj"/>
+    </Target>
+    <Target Name="ACAD:Clean">
+        <MSBuild Projects="C:\Users\Home\Documents\RAD Studio\Projects\ACAD.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ACAD:Make">
+        <MSBuild Projects="C:\Users\Home\Documents\RAD Studio\Projects\ACAD.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Mechanism;ACAD"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Mechanism:Clean;ACAD:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Mechanism:Make;ACAD:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

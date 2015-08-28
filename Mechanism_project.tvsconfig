@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<TgConfig Version="3" SubLevelDisabled="False">
+  <Option Name="namespaceFolder.GDIPUTIL" Type="System.String" Value="GDIPUTIL" Category="General" IsBrowsable="False" />
+  <Option Name="namespaceFolder.Link" Type="System.String" Value="Link" Category="General" IsBrowsable="False" />
+</TgConfig>
