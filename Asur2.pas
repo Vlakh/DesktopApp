@@ -285,9 +285,12 @@ var
 i : integer;
 begin
   L1_ := 'L'+IntToStr(index) + ' ';
-  VL1 := FloattoStr(s.L2);
-    for I := 0 to Length(VL1) do
-      if VL1[i]=',' then VL1[i]:='.';
+  if (index = 2) or (index =3) then
+    VL1 := FloattoStr(s.L2)
+      else
+    VL1 := FloattoStr(s.L3);
+  for I := 0 to Length(VL1) do
+     if VL1[i]=',' then VL1[i]:='.';
   Fii_ := 'Fi'+IntToStr(index) + ' ';
   if index =3 then
   begin
@@ -369,8 +372,8 @@ begin
     '(command "_Ucs" "_n" (list  0 0 (- (/ '+B+' -2.) 30.)))'       +  #$D#$A +
     '(command "_Ucs" "_n" "_x" 270.)'                           +  #$D#$A +
     '(command "_MIRROR" '+AS2_1+ AS2_2 +AS2_3+ AS2_5+ AS2_7+ AS2_8+'"" (list 0 0  (/ '+B+' -2.)) (list 50 0 (/ '+B+' 2.)) "_n" )' +  #$D#$A +
-    '(command "_Ucs" "_n" "_x" -270.)'                                                         +  #$D#$A +
-    '(command "_Ucs" "_n" (list  0 0 (+ (/ '+B+' 2.) 30.)))'                                       +  #$D#$A
+    '(command "_Ucs" "_n" "_x" -270.)'       +  #$D#$A +
+    '(command "_Ucs" "_n" (list  0 0 (+ (/ '+B+' 2.) 30.)))'   +  #$D#$A
 
   else
 

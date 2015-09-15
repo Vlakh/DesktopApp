@@ -185,7 +185,10 @@ begin
   Y := 'Y ';
 
   Vl := FloattoStr(L);
-  VFi := FloattoStr(RadToDeg(kpoint[1].fi[s.fi]));
+  if s.zG = 1 then
+    VFi := FloattoStr(RadToDeg(kpoint[1].fi[s.fi]))
+  else
+    VFi := FloattoStr(RadToDeg(-kpoint[1].fi[s.fi]));
   for I := 0 to Length(VL) do
     if VL[i]=',' then VL[i]:='.';
   for I := 0 to Length(VFi) do

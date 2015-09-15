@@ -444,7 +444,7 @@ object FormMain: TFormMain
       Left = 1
       Top = 46
       Width = 665
-      Height = 438
+      Height = 468
       Align = alClient
       Color = clBtnHighlight
       ParentColor = False
@@ -719,21 +719,12 @@ object FormMain: TFormMain
       Left = 1
       Top = 46
       Width = 665
-      Height = 438
+      Height = 468
       Align = alClient
       DefaultUrl = 'about:blank'
       TabOrder = 2
       OnBeforeDownload = crmBeforeDownload
-      OnBeforeResourceLoad = crmBeforeResourceLoad
-    end
-    object ProgressBar1: TProgressBar
-      Left = 1
-      Top = 484
-      Width = 665
-      Height = 30
-      Align = alBottom
-      TabOrder = 3
-      Visible = False
+      ExplicitHeight = 438
     end
   end
   object BtnAutodesk: TBitBtn
@@ -997,12 +988,6 @@ object FormMain: TFormMain
     TabOrder = 3
     OnClick = BtnUADClick
   end
-  object AcadDocument1: TAcadDocument
-    AutoConnect = False
-    ConnectKind = ckRunningOrNew
-    Left = 96
-    Top = 152
-  end
   object PipeConsole1: TPipeConsole
     LastError = 0
     OnError = PipeConsole1Error
@@ -1025,7 +1010,7 @@ object FormMain: TFormMain
     Left = 96
     Top = 328
     Bitmap = {
-      494C01010800D002440228002800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C01010800D0025C0228002800FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000A0000000780000000100200000000000002C
       0100000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -3507,16 +3492,13 @@ object FormMain: TFormMain
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000
       000000000000}
   end
-  object SaveDialog: TSaveDialog
-    Left = 216
-    Top = 104
-  end
-  object ActionList: TActionList
-    Left = 216
-    Top = 160
-    object actGoTo: TAction
-      Caption = '>'
-      OnExecute = actGoToExecute
-    end
+  object PipeConsoleAcad: TPipeConsole
+    LastError = 0
+    OnError = PipeConsoleAcadError
+    OnStop = PipeConsoleAcadStop
+    Priority = tpNormal
+    Visible = False
+    Left = 192
+    Top = 216
   end
 end

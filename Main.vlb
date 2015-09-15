@@ -13,9 +13,6 @@ Coordinates=682,10,57,58
 [GroupBox2]
 Coordinates=375,144,79,58
 
-[AcadDocument1]
-Coordinates=757,232,109,36
-
 [EdWidth]
 Coordinates=664,212,63,58
 
@@ -97,9 +94,6 @@ Coordinates=206,144,84,58
 [PlayPause]
 Coordinates=515,212,76,58
 
-[SaveDialog]
-Coordinates=668,527,80,36
-
 [CBoxFi]
 Coordinates=121,10,101,124
 
@@ -131,6 +125,6 @@ Coordinates=505,10,78,58
 Coordinates=464,144,79,58
 
 []
-Coordinates=443,280,114,58
+Coordinates=668,527,80,36
 Visible=True
 

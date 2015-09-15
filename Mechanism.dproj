@@ -103,6 +103,10 @@
         <DCCReference Include="AutoCAD_TLB.pas"/>
         <DCCReference Include="ceferr.pas"/>
         <DCCReference Include="filescheme\ceffilescheme.pas"/>
+        <DCCReference Include="Progress.pas">
+            <Form>FormProg</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <None Include="ModelSupport_Mechanism\default.txaPackage"/>
         <None Include="ModelSupport_Mechanism\default.txvpck"/>
         <None Include="ModelSupport_Mechanism\Main\default.txvpck"/>

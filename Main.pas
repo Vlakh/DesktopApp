@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, ActiveX,ComObj, Vcl.StdCtrls,
-  Vcl.ExtCtrls,ceflib, cefvcl,XPMan, Registry, ShellApi, SyncObjs,
+  Vcl.ExtCtrls,ceflib, cefvcl,XPMan, Registry, ShellApi, SyncObjs,progress,
 
   MainOptions, OpenGL, DGLUT, ObjectEdit, AutoCAD_TLB, OleCtrls, pipes,
   GDIPAPI, GDIPOBJ, Mehanism, Crank, Asur2,  KinematicPair,
@@ -35,7 +35,6 @@ type
     ButtonONScreen: TButton;
     GroupBox1: TGroupBox;
     TreeObjects: TTreeView;
-    AcadDocument1: TAcadDocument;
     PipeConsole1: TPipeConsole;
     Panel: TPanel;
     Memo: TMemo;
@@ -61,17 +60,14 @@ type
     Image2: TImage;
     BtnAutodesk: TBitBtn;
     BtnUAD: TBitBtn;
-    SaveDialog: TSaveDialog;
     DrawBox: TPaintBox;
     GroupBox3: TGroupBox;
     CBox3D: TComboBox;
-    ActionList: TActionList;
-    actGoTo: TAction;
     crm: TChromium;
     CBoxAutoLisp: TCheckBox;
     EdAdress: TEdit;
     BtnRefresh: TButton;
-    ProgressBar1: TProgressBar;
+    PipeConsoleAcad: TPipeConsole;
     procedure BtnRefreshClick(Sender: TObject);
     procedure PipeConsole1Output(Sender: TObject; Stream: TStream);
     procedure PipeConsole1Stop(Sender: TObject; ExitValue: Cardinal);
@@ -108,12 +104,10 @@ type
     procedure CBoxFormatChange(Sender: TObject);
     procedure EdHPExit(Sender: TObject);
     procedure EdHPKeyPress(Sender: TObject; var Key: Char);
-    procedure BtnDWGClick(Sender: TObject);
     procedure CBox3DChange(Sender: TObject);
     procedure actGoToExecute(Sender: TObject);
     procedure CBoxAutoLispClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
-    procedure BtnLSPClick(Sender: TObject);
     procedure BtnUADClick(Sender: TObject);
     procedure BtnAutodeskClick(Sender: TObject);
     procedure EdAdressChange(Sender: TObject);
@@ -122,7 +116,8 @@ type
       const callback: ICefBeforeDownloadCallback);
     procedure crmBeforeResourceLoad(Sender: TObject; const browser: ICefBrowser;
       const frame: ICefFrame; const request: ICefRequest; out Result: Boolean);
-    procedure BtnBDXFClick(Sender: TObject);
+    procedure PipeConsoleAcadError(Sender: TObject; Stream: TStream);
+    procedure PipeConsoleAcadStop(Sender: TObject; ExitValue: Cardinal);
 
   private
      procedure LispSTART;
@@ -157,48 +152,128 @@ implementation
 {$R *.dfm}
 
 procedure TFormMain.AcadProcess;
-var i : integer;
+var
+  hK: HKey;
+  Value: PWideChar;
+  L: Longint;
+  str : string;
+  OleStr: PWideChar;
+  Registry : TRegistry;
+  i : integer;
+  bytes: TBytes;
 begin
-  ShowMessage('Это займет несколько секунд, подождите и ничего не делайте, програма все сделает за Вас!');
+  FormProg.Show;
+  //=====================   5%
+  FormProg.progressbar.Position := 5;
+  FormProg.LabelString.Caption := 'Cоздается AutoLISP программа: 5%';
+  //=====================
   Memo.Lines.Clear;
   LispSTART;
   for I := 0 to 4 do
     Memo.Lines.Add(TMehanism(TreeObjects.Items.Item[0].Item[i].Data).Lisp);
   LispEND;
-  Memo.Lines.SaveToFile(ExtractFilePath(Application.ExeName)+'3D.lsp');
-  progressbar1.Position := 5;
-  // ЗАПУСК АКАД
-  try
-    AcadApp := GetActiveOleObject('AutoCAD.Application');
-  except
-    AcadApp := CreateOleObject('AutoCAD.Application');
-  end;
-  progressbar1.Position := 30;
-  // ПУТИ ФАЙЛОВ
-  s.FilePath := StringReplace(ExtractFilePath(Application.ExeName),
-        '\', '\\',[rfReplaceAll, rfIgnoreCase]);
+  if not DirectoryExists('c:\Temp') then
+    ForceDirectories('c:\Temp');
+  Memo.Lines.SaveToFile('C:\Temp\3D.lsp');
   s.ACADFileNAme := RandomPassword(10)+'.dwg';
+  //=====================   15%
+  FormProg.progressbar.Position := 15;
+  FormProg.LabelString.Caption := 'Запуск консольного AutoCAD AcCoreConsole.exe: 15%';
+  //=====================
+
+//=========================================
+//  ВАРИАНТ СОЗДАНИЯ 3D модели с помощью OLE и COM
+//=========================================
+  // ЗАПУСК АКАД
+
+//  try
+//    AcadApp := GetActiveOleObject('AutoCAD.Application');
+//  except
+//    AcadApp := CreateOleObject('AutoCAD.Application');
+//  end;
+//  progressbar1.Position := 30;
+
   // РАБОТА АКАДА
-  progressbar1.Position := 35;
-  AcadApp.Visible := true;
+
+//  AcadApp.Visible := false;
+//  try
+//    AcadApp.ActiveDocument.SendCommand('(setvar "SECURELOAD" 0)' +  #$D#$A);
+//    AcadApp.ActiveDocument.SendCommand('(load "'+s.FilePath +'3D.lsp")' +  #$D#$A);
+//    progressbar1.Position := 50;
+//    AcadApp.ActiveDocument.SendCommand(s.calc +  #$D#$A);
+//    progressbar1.Position := 66;
+//    sleep(5000);
+//    AcadApp.ActiveDocument.SaveAs(ExtractFilePath(Application.ExeName)+s.ACADFileNAme,emptyparam,emptyparam);
+//    progressbar1.Position := 74;
+//    AcadApp.quit;
+//  except
+//    AcadApp.quit;
+//    Cbox3D.ItemIndex := 0;
+//    progressbar1.Position := 100;
+//    progressbar1.visible := false;
+//    exit;
+//  end;
+//  FormMain.Cursor := crDefault;
+//  DrawBox.Cursor := crDefault;
+  // Поиск консольного акада
+
   try
-    AcadApp.ActiveDocument.SendCommand('(load "'+s.FilePath +'3D.lsp")' +  #$D#$A);
-    progressbar1.Position := 50;
-    AcadApp.ActiveDocument.SendCommand(s.calc +  #$D#$A);
-    progressbar1.Position := 66;
-    sleep(5000);
-    AcadApp.ActiveDocument.SaveAs(ExtractFilePath(Application.ExeName)+s.ACADFileNAme,emptyparam,emptyparam);
-    progressbar1.Position := 74;
-    AcadApp.quit;
+    RegOpenKey(HKEY_CLASSES_ROOT, 'AutoCAD.Application\CLSID', hK);
+    L:=1024;
+    GetMem(Value,L);
+    RegQueryValue(hK, NIL, Value, L);
+    str := 'CLSID\'+Value+'\LocalServer32\';
+    Try
+      Registry := TRegistry.Create(KEY_READ or KEY_WOW64_64KEY);
+    except
+      Registry := TRegistry.Create;
+    End;
+    Registry.RootKey :=  HKEY_CLASSES_ROOT;
+    Registry.OpenKey(str,false);
+    str:= Registry.ReadString('');
+    for I := 0 to str.Length do
+       if str[i] = '/' then
+    Delete(Str, I-9,str.Length-9);
+    str := Str + 'AcCoreConsole.exe';
+    Registry.CloseKey;
+    Registry.Free;
+    FreeMem(Value);
   except
-    AcadApp.quit;
-    Cbox3D.ItemIndex := 0;
-    progressbar1.Position := 100;
-    progressbar1.visible := false;
+    ShowMessage('Программа не может найти консольную версию AutoCAD :(');
+    FormProg.Close;
+    Registry.CloseKey;
+    Registry.Free;
+    FreeMem(Value);
     exit;
   end;
-  FormMain.Cursor := crDefault;
-  DrawBox.Cursor := crDefault;
+  //=====================   35%
+  FormProg.progressbar.Position := 35;
+  FormProg.LabelString.Caption := 'Загрузка AutoLISP программы в AcCoreConsole.exe: 35%';
+  //=====================
+  //консольный акад
+  try
+    PipeConsoleAcad.Start(str, '');
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('(setvar "SECURELOAD" 0)' + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('(load "C:/Temp/3d.lsp")' + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('mechanismuad' + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('_save' + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('C:\Temp\'+s.ACADFileNAme + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+    bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('_quit' + #13#10);
+    PipeConsoleAcad.Write(bytes[0], Length(bytes));
+  except
+    ShowMessage('AutoCAD не отвечает :(');
+    FormProg.Close;
+    exit;
+  end;
+  //=====================   65%
+  FormProg.progressbar.Position := 65;
+  FormProg.LabelString.Caption := 'Сохранение файла DWG: 65%';
+  //=====================
 end;
 
 procedure TFormMain.RunConsole;
@@ -207,7 +282,15 @@ var
 begin
   Memo.Lines.Text :=Memo.Lines.Text + 'View and Data API' + #13#10;
   PipeConsole1.Start('ConsoleApp.exe', '');
-  bytes := TEncoding.GetEncoding('Windows-1251').GetBytes(s.ACADFileNAme + #13#10);
+  While FileExists('C:\Temp\'+s.ACADFileNAme)=false do
+  begin
+    //ShowMessage('файла пока не существует не существует');
+  end;
+  //=====================   80%
+  FormProg.progressbar.Position := 80;
+  FormProg.LabelString.Caption := 'Выгрузка файла DWG на сервер Autodesk: 80%';
+  //=====================
+  bytes := TEncoding.GetEncoding('Windows-1251').GetBytes('C:\Temp\'+s.ACADFileNAme + #13#10);
   PipeConsole1.Write(bytes[0], Length(bytes));
 end;
 
@@ -228,6 +311,7 @@ procedure TFormMain.actGoToExecute(Sender: TObject);
 begin
   if crm.Browser <> nil then
     crm.Browser.MainFrame.LoadUrl(s.Address);
+
 end;
 
 procedure TFormMain.BtnAutodeskClick(Sender: TObject);
@@ -246,120 +330,6 @@ begin
   end
   else
     ShellExecute(Handle, nil, PWideChar(edadress.Text), nil, nil, SW_SHOW);
-end;
-
-procedure TFormMain.BtnBDXFClick(Sender: TObject);
-var I : integer;
-    Sel: Variant;
-begin
-  progressbar1.visible := true;
-  ShowMessage('Это займет несколько секунд, подождите и ничего не делайте, програма все сделает за Вас!');
-  Memo.Lines.Clear;
-  Lisp2DSTART;
-  for I := 0 to 4 do
-    Memo.Lines.Add(TMehanism(TreeObjects.Items.Item[0].Item[i].Data).Lisp2D);
-  Lisp2DEND;
-  Memo.Lines.SaveToFile(ExtractFilePath(Application.ExeName)+'2D.lsp');
-  progressbar1.Position := 5;
-  SaveDialog.Filter := 'AutoCAD DXF|*.dxf';
-  if SaveDialog.Execute then
-    begin
-      s.ClientFilePath  := SaveDialog.FileName;
-    end else
-      exit;
-  // ЗАПУСК АКАД
-  try
-    AcadApp := GetActiveOleObject('AutoCAD.Application');
-  except
-    AcadApp := CreateOleObject('AutoCAD.Application');
-  end;
-  progressbar1.Position := 30;
-  // РАБОТА АКАДА
-  progressbar1.Position := 35;
-  AcadApp.Visible := false;
-  try
-    AcadApp.ActiveDocument.SendCommand('(load "'+s.FilePath +'2D.lsp")' +  #$D#$A);
-    progressbar1.Position := 50;
-    AcadApp.ActiveDocument.SendCommand(s.calc +  #$D#$A);
-    progressbar1.Position := 66;
-    try
-       Sel := AcadApp.ActiveDocument.SelectionSets.Add('_TEMP_' + IntToStr(GetTickCount));
-       try
-         AcadApp.ActiveDocument.Export(s.ClientFilePath, 'dxf', Sel);
-       finally
-         Sel := Unassigned;
-       end;
-    finally
-       AcadApp.ActiveDocument := Unassigned;
-    end;
-    AcadApp.ActiveDocument.SaveAs(s.ClientFilePath,emptyparam,emptyparam);
-    progressbar1.Position := 74;
-    AcadApp.quit;
-  except
-    AcadApp.quit;
-    Cbox3D.ItemIndex := 0;
-    progressbar1.Position := 100;
-    progressbar1.visible := false;
-    exit;
-  end;
-  progressbar1.visible := false;
-end;
-
-procedure TFormMain.BtnDWGClick(Sender: TObject);
-var i : integer;
-begin
-  progressbar1.visible := true;
-    ShowMessage('Это займет несколько секунд, подождите и ничего не делайте, програма все сделает за Вас!');
-  Memo.Lines.Clear;
-  LispSTART;
-  for I := 0 to 4 do
-    Memo.Lines.Add(TMehanism(TreeObjects.Items.Item[0].Item[i].Data).Lisp);
-  LispEND;
-  Memo.Lines.SaveToFile(ExtractFilePath(Application.ExeName)+'3D.lsp');
-  SaveDialog.Filter := 'AutoCAD DWG|*.dwg';
-  if SaveDialog.Execute then
-    begin
-      s.ClientFilePath  := SaveDialog.FileName;
-    end else
-      exit;
-  try
-    AcadApp := GetActiveOleObject('AutoCAD.Application');
-  except
-    AcadApp := CreateOleObject('AutoCAD.Application');
-  end;
-  s.FilePath := StringReplace(ExtractFilePath(Application.ExeName),
-        '\', '\\',[rfReplaceAll, rfIgnoreCase]);
-  AcadApp.Visible := false;
-  try
-    AcadApp.ActiveDocument.SendCommand('(load "'+s.FilePath +'3D.lsp")' +  #$D#$A);
-    AcadApp.ActiveDocument.SendCommand(s.calc +  #$D#$A);
-    AcadApp.ActiveDocument.SaveAs(s.ClientFilePath,emptyparam,emptyparam);
-    AcadApp.quit;
-  except
-    AcadApp.quit;
-    Cbox3D.ItemIndex := 0;
-    progressbar1.Position := 100;
-    progressbar1.visible := false;
-    exit;
-  end;
-  progressbar1.visible := false;
-end;
-
-procedure TFormMain.BtnLSPClick(Sender: TObject);
-var i : integer;
-begin
-  Memo.Lines.Clear;
-  SaveDialog.Filter := 'AutoLISP LSP|*.lsp';
-  if SaveDialog.Execute then
-    begin
-      s.ClientFilePath  := SaveDialog.FileName +'.lsp';
-    end else
-      exit;
-  LispSTART;
-  for I := 0 to 4 do
-    Memo.Lines.Add(TMehanism(TreeObjects.Items.Item[0].Item[i].Data).Lisp);
-  LispEND;
-  Memo.Lines.SaveToFile( s.ClientFilePath);
 end;
 
 procedure TFormMain.BtnUADClick(Sender: TObject);
@@ -426,15 +396,12 @@ begin
     FormMain.Cursor := crHourGlass;
     DrawBox.Cursor := crHourGlass;
     crm.Enabled := true;
-    progressbar1.Visible := true;
     acadprocess;
     s.if3D := true;
-    Runconsole;
+//    Runconsole;
     DrawBox.visible := false;
     crm.visible := true;
     timer.Enabled := false;
-    DeleteFile(ExtractFilePath(Application.ExeName)+s.ACADFileNAme);
-    DeleteFile(ExtractFilePath(Application.ExeName)+'3D.lsp');
   end;
   FormMain.SetFocus;
 end;
@@ -860,8 +827,25 @@ begin
     ShellExecute(Handle, nil, PWideChar(s.Address), nil, nil, SW_SHOW);
   end;
   s.if3D := false;
-  progressbar1.Position := 100;
-  progressbar1.visible := false;
+  //=====================   100%
+  FormProg.progressbar.Position := 100;
+  FormProg.LabelString.Caption := 'Выполнено: 100%';
+  FormProg.Close;
+  //=====================
+end;
+
+procedure TFormMain.PipeConsoleAcadError(Sender: TObject; Stream: TStream);
+var
+   bytes: TBytes;
+begin
+   //Вывод сообщений об ошибке
+   SetLength(bytes, Stream.Size);
+   Stream.Read(bytes, Stream.Size);
+end;
+
+procedure TFormMain.PipeConsoleAcadStop(Sender: TObject; ExitValue: Cardinal);
+begin
+  RunConsole;
 end;
 
 procedure TFormMain.PlayPauseClick(Sender: TObject);

@@ -20,7 +20,8 @@ uses
   pipes in 'pipes.pas',
   AutoCAD_TLB in 'AutoCAD_TLB.pas',
   ceferr in 'ceferr.pas',
-  ceffilescheme in 'filescheme\ceffilescheme.pas';
+  ceffilescheme in 'filescheme\ceffilescheme.pas',
+  Progress in 'Progress.pas' {FormProg};
 
 {$R *.res}
 
@@ -40,5 +41,6 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TFormMain, FormMain);
+  Application.CreateForm(TFormProg, FormProg);
   Application.Run;
 end.
