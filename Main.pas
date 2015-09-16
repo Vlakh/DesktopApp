@@ -393,8 +393,6 @@ begin
   end
   else
   begin
-    FormMain.Cursor := crHourGlass;
-    DrawBox.Cursor := crHourGlass;
     crm.Enabled := true;
     acadprocess;
     s.if3D := true;
